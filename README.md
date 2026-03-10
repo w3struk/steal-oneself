@@ -50,10 +50,12 @@ services:
     container_name: caddy
     restart: always
     network_mode: host
+    command: caddy run --config /etc/caddy/caddy.json
     volumes:
       - ./caddy/data:/data
-      - ./caddy/Caddyfile:/etc/caddy/Caddyfile
       - ./caddy/templates:/srv
+      - ./caddy/caddy.json:/etc/caddy/caddy.json
+#      - ./caddy/Caddyfile:/etc/caddy/Caddyfile
 
   3xui:
     image: ghcr.io/mhsanaei/3x-ui:latest
@@ -67,97 +69,225 @@ services:
       XUI_ENABLE_FAIL2BAN: "true"
     tty: true
 ```
-
 - Создайте файл `Caddyfile`:
 ```bash
-nano /opt/3x-ui-setup/caddy/Caddyfile
+nano /opt/3x-ui-setup/caddy/caddy.json
 ```
 ```bash
 {
-    https_port 4123
-    default_bind 127.0.0.1
-    servers {
-        protocols h1 h2
-        listener_wrappers {
-            proxy_protocol {
-                allow 127.0.0.1/32
+  "apps": {
+    "http": {
+      "https_port": 4123,
+      "servers": {
+        "srv0": {
+          "listen": ["0.0.0.0:80"],
+          "listener_wrappers": [
+            {"allow": ["127.0.0.1/32"], "wrapper": "proxy_protocol"}
+          ],
+          "automatic_https": {"disable_redirects": true},
+          "protocols": ["h1", "h2"],
+          "routes": [
+            {
+              "match": [{"host": ["example.com"]}],
+              "handle": [
+                {
+                  "handler": "subroute",
+                  "routes": [
+                    {
+                      "handle": [
+                        {
+                          "handler": "static_response",
+                          "headers": {
+                            "Location": ["https://example.com{http.request.uri}"]
+                          },
+                          "status_code": 301
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ],
+              "terminal": true
+            },
+            {
+              "handle": [
+                {
+                  "handler": "subroute",
+                  "routes": [
+                    {
+                      "handle": [
+                        {"handler": "static_response", "status_code": 204}
+                      ]
+                    }
+                  ]
+                }
+              ],
+              "terminal": true
             }
-            tls
-        }
-    }
-    # HTTP > HTTPS для 8443 порта
-    servers :8443 {
-        protocols h1 h2
-        listener_wrappers {
-            proxy_protocol {
-                allow 127.0.0.1/32
+          ]
+        },
+        "srv1": {
+          "listen": ["0.0.0.0:8443"],
+          "listener_wrappers": [
+            {"allow": ["127.0.0.1/32"], "wrapper": "proxy_protocol"},
+            {"wrapper": "http_redirect"},
+            {"wrapper": "tls"}
+          ],
+          "automatic_https": {"disable_redirects": true},
+          "protocols": ["h1", "h2"],
+          "routes": [
+            {
+              "match": [{"host": ["example.com"]}],
+              "handle": [
+                {
+                  "handler": "subroute",
+                  "routes": [
+                    {
+                      "handle": [
+                        {
+                          "encodings": {"gzip": {}, "zstd": {}},
+                          "handler": "encode",
+                          "prefer": ["gzip", "zstd"]
+                        }
+                      ]
+                    },
+                    {
+                      "group": "group4",
+                      "match": [{"path": ["/sub/*"]}],
+                      "handle": [
+                        {
+                          "handler": "subroute",
+                          "routes": [
+                            {
+                              "handle": [
+                                {
+                                  "handler": "reverse_proxy",
+                                  "headers": {
+                                    "request": {
+                                      "set": {
+                                        "X-Real-Ip": ["{http.request.remote.host}"]
+                                      }
+                                    }
+                                  },
+                                  "upstreams": [{"dial": "127.0.0.1:2096"}]
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "group": "group4",
+                      "handle": [
+                        {
+                          "handler": "subroute",
+                          "routes": [
+                            {
+                              "handle": [
+                                {
+                                  "handler": "reverse_proxy",
+                                  "headers": {
+                                    "request": {
+                                      "set": {
+                                        "X-Real-Ip": ["{http.request.remote.host}"]
+                                      }
+                                    }
+                                  },
+                                  "upstreams": [{"dial": "127.0.0.1:2053"}]
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ],
+              "terminal": true
             }
-            http_redirect
-            tls
+          ]
+        },
+        "srv2": {
+          "listen": ["127.0.0.1:4123"],
+          "listener_wrappers": [
+            {"allow": ["127.0.0.1/32"], "wrapper": "proxy_protocol"},
+            {"wrapper": "tls"}
+          ],
+          "automatic_https": {"disable_redirects": true},
+          "protocols": ["h1", "h2"],
+          "routes": [
+            {
+              "match": [{"host": ["example.com"]}],
+              "handle": [
+                {
+                  "handler": "subroute",
+                  "routes": [
+                    {
+                      "handle": [
+                        {"handler": "vars", "root": "/srv"},
+                        {
+                          "handler": "headers",
+                          "response": {
+                            "set": {
+                              "Strict-Transport-Security": ["max-age=31536000; includeSubDomains; preload"],
+                              "X-Content-Type-Options": ["nosniff"],
+                              "X-Frame-Options": ["SAMEORIGIN"]
+                            }
+                          }
+                        },
+                        {
+                          "encodings": {"gzip": {}, "zstd": {}},
+                          "handler": "encode",
+                          "prefer": ["gzip", "zstd"]
+                        },
+                        {
+                          "handler": "file_server",
+                          "hide": ["/etc/caddy/Caddyfile"]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ],
+              "terminal": true
+            },
+            {
+              "handle": [
+                {
+                  "handler": "subroute",
+                  "routes": [
+                    {
+                      "handle": [
+                        {"handler": "static_response", "status_code": 204}
+                      ]
+                    }
+                  ]
+                }
+              ],
+              "terminal": true
+            }
+          ]
         }
+      }
+    },
+    "tls": {
+      "automation": {
+        "policies": [
+          {"subjects": ["example.com"]},
+          {"issuers": [{"module": "internal"}]}
+        ]
+      }
     }
-    auto_https disable_redirects
-}
-
-https://example.com {
-
-    root * /srv
-    encode gzip zstd
-    file_server
-    header {
-           Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
-           X-Content-Type-Options nosniff
-           X-Frame-Options SAMEORIGIN
-    }
-}
-
-http://example.com {
-
-    bind 0.0.0.0
-    redir https://example.com{uri} permanent
-}
-
-https://example.com:8443 {
-
-    bind 0.0.0.0
-    encode gzip zstd
-
-    # Подписка
-    handle /sub/* {
-        reverse_proxy 127.0.0.1:2096 {
-            header_up X-Real-IP {remote_host}
-        }
-    }
-
-    # Панель 3x-ui
-    handle {
-        reverse_proxy 127.0.0.1:2053 {
-            header_up X-Real-IP {remote_host}
-        }
-    }
-}
-
-:4123 {
-
-    tls internal
-    respond 204
-}
-
-:80 {
-
-    bind 0.0.0.0
-    respond 204
+  }
 }
 ```
 
 - Замените example.com на ваш реальный домен в `Caddyfile`\
   Можно это сделать через sed, где он заменит `example.com` из конфига на `ваш.домен.com`:
 ```bash
-sed -i 's/example.com/ваш.домен.com/g' /opt/3x-ui-setup/caddy/Caddyfile
-```
-Или внимательно заменить вручную в редакторе:
-```bash
-nano /opt/3x-ui-setup/caddy/Caddyfile
+sed -i 's/example.com/ваш.домен.com/g' /opt/3x-ui-setup/caddy/caddy.json
 ```
 - Для маскировки сервера используется [Confluence](https://github.com/Jolymmiles/confluence-marzban-home)\
 Добавьте страницу для маскировки:
@@ -218,18 +348,7 @@ docker compose -f /opt/3x-ui-setup/docker-compose.yml up -d
 
 - Измените путь в `Caddyfile`:
 ```bash
-sed -i 's|/sub/\*|/sub-secret-path/*|g' /opt/3x-ui-setup/caddy/Caddyfile
-```
-Или внимательно заменить вручную в редакторе:
-```bash
-nano /opt/3x-ui-setup/caddy/Caddyfile
-```
-```bash
-handle /sub/*
-```
-на:
-```bash
-handle /sub-secret-path/*
+sed -i 's|/sub/|/sub-secret-path/|g' /opt/3x-ui-setup/caddy/caddy.json
 ```
 - Перезапустите контейнеры:
 ```bash
