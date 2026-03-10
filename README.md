@@ -69,7 +69,7 @@ services:
       XUI_ENABLE_FAIL2BAN: "true"
     tty: true
 ```
-- Создайте файл `Caddyfile`:
+- Создайте файл `caddy.json`:
 ```bash
 nano /opt/3x-ui-setup/caddy/caddy.json
 ```
