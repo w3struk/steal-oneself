@@ -343,9 +343,9 @@ docker compose -f /opt/3x-ui-setup/docker-compose.yml up -d
 - Сохраните настройки и перезапустите панель.
 
 > [!CAUTION]
-> Без изменения `Caddyfile` подписки открываться не будут
+> Без изменения `caddy.json` подписки открываться не будут
 
-- Измените путь в `Caddyfile`:
+- Измените путь в `caddy.json`:
 ```bash
 sed -i 's|/sub/|/sub-secret-path/|g' /opt/3x-ui-setup/caddy/caddy.json
 ```
