@@ -306,36 +306,14 @@ docker compose -f /opt/3x-ui-setup/docker-compose.yml up -d
 > [!WARNING]
 > Обязательно, сразу же измените стандартные логин и пароль: `Panel Settings -> Authentication`
 
-### Создание подключения Reality (Self Steal)
-
-#### Создайте новый inbound в панели 3x-ui
-При создании inbound используйте следующии параметры:
-- Protocol: vless
-- Port: 443
-- Flow: xtls-rprx-vision
-- Transmission: tcp
-- Security: Reality
-- Xver: 1
-- uTLS: chrome
-- Target: 127.0.0.1:4123
-- SNI: example.com
-- PrivateKey Public Key: сгенерировать нажав Get New Cert
-- ShortID: сгенерировать
-- Sniffing - enable: HTTP TLS QUIC FAKEDNS отмечены
-> [!CAUTION]
-> Замените **example.com** на ваш домен.>
-- Inbound должен выглядеть приблизительно [так](panel.png)
-
-- Теперь должен заработать маскировочный сайт `http://ваш.домен.com`
-
 ### Изменение путей к панели и подписке
-**Настройка пути до панели**
+#### Настройка пути до панели
 - Перейдите `Panel Settings -> General -> URI Path`
 - Измените / на что то свое, например: /admin-secret-path/
 - Сохраните настройки.
 - Теперь панель будет доступна по адресу: https://example.com:8443/admin-secret-path
 
-**Настройка пути до подписки (если планируется использовать)**
+#### Настройка пути до подписки**
 - Перейдите в `Panel Settings → Subscription -> URI Path (sub)`
 - Измените /sub/ на что то свое, например: /sub-secret-path/
 - `Panel Settings → Subscription -> Reverse Proxy URI`
@@ -355,6 +333,27 @@ docker compose -f /opt/3x-ui-setup/docker-compose.yml down && docker compose -f 
 ```
 > [!CAUTION]
 > Необходимо использовать собственное уникальное значение для admin-secret-path и sub-secret-path.
+
+### Создание подключения Reality (Self Steal)
+#### Создайте новый inbound в панели 3x-ui
+При создании inbound используйте следующии параметры:
+- Protocol: vless
+- Port: 443
+- Flow: xtls-rprx-vision
+- Transmission: tcp
+- Security: Reality
+- Xver: 1
+- uTLS: chrome
+- Target: 127.0.0.1:4123
+- SNI: example.com
+- PrivateKey Public Key: сгенерировать нажав Get New Cert
+- ShortID: сгенерировать
+- Sniffing - enable: HTTP TLS QUIC FAKEDNS отмечены
+> [!CAUTION]
+> Замените **example.com** на ваш домен.>
+- Inbound должен выглядеть приблизительно [так](panel.png)
+
+- Теперь должен заработать маскировочный сайт `http://ваш.домен.com`
 
 #### Thanks:
  [Akiyamov](https://github.com/Akiyamov) 
