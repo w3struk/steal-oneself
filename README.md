@@ -313,7 +313,7 @@ docker compose -f /opt/3x-ui-setup/docker-compose.yml up -d
 - Сохраните настройки.
 - Теперь панель будет доступна по адресу: https://example.com:8443/admin-secret-path
 
-#### Настройка пути до подписки**
+#### Настройка пути до подписки
 - Перейдите в `Panel Settings → Subscription -> URI Path (sub)`
 - Измените /sub/ на что то свое, например: /sub-secret-path/
 - `Panel Settings → Subscription -> Reverse Proxy URI`
