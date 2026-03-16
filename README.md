@@ -7,7 +7,7 @@
 Предполагается, что:
 - Настроен и защищён доступ к серверу по SSH
 - Установлен и настроен firewall (открыты порты 80, 443 и 8443)
-- Зарегистрирован и делегирован домен (например, example.com), указывающий на ваш сервер \
+- Зарегистрирован и делегирован домен (например, my.domain.com), указывающий на ваш сервер \
 Нет своего домена, не страшно, можно использовать бесплатные домены предоставляемые сервисами: dynu.com, freedns.afraid.org, duckdns.org и т.п., главное, что бы он был и указывал на сервер
 
 ### Установка Docker
@@ -155,10 +155,10 @@ https://example.com:8443 {
 }
 ```
 
-- Замените example.com на ваш реальный домен в `Caddyfile` через sed, где он заменит `example.com` из конфига на `ваш.домен.com`:
+- Замените example.com на ваш реальный домен в `Caddyfile` через sed, где он заменит `example.com` из конфига на `my.domain.com`:
 
 ```bash
-sed -i 's/example.com/ваш.домен.com/g' /opt/3x-ui-setup/caddy/Caddyfile
+sed -i 's/example.com/my.domain.com/g' /opt/3x-ui-setup/caddy/Caddyfile
 ```
 
 - Или можете заменить домен вручную, редактируя `Caddyfile` в редакторе
@@ -183,7 +183,7 @@ docker compose -f /opt/3x-ui-setup/docker-compose.yml up -d
 
 ### Первый вход в панель
 
-- Откройте в браузере: https://ваш.домен.com:8443
+- Откройте в браузере: https://my.domain.com:8443
 - Логин: admin
 - Пароль: admin
 
@@ -197,14 +197,14 @@ docker compose -f /opt/3x-ui-setup/docker-compose.yml up -d
 - Перейдите `Panel Settings -> General -> URI Path`
 - Измените `/` на что то свое, например: `/admin-secret-path/`
 - Сохраните настройки.
-- Теперь панель будет доступна по адресу: `https://ваш.домен.com:8443/admin-secret-path`
+- Теперь панель будет доступна по адресу: `https://my.domain.com:8443/admin-secret-path`
 
 #### Настройка пути до подписки
 
 - Перейдите в `Panel Settings → Subscription -> URI Path (sub)`
 - Измените `/sub/` на что то свое, например: `/super-secret-path/`
 - `Panel Settings → Subscription -> Reverse Proxy URI`
-- Измените Reverse Proxy URI на `https://ваш.домен.com:8443/super-secret-path/`
+- Измените Reverse Proxy URI на `https://my.domain.com:8443/super-secret-path/`
 - Сохраните настройки и перезапустите панель.
 
 > [!CAUTION]
@@ -213,7 +213,7 @@ docker compose -f /opt/3x-ui-setup/docker-compose.yml up -d
 - Измените путь `/sub/` на `/super-secret-path/`  в `Caddyfile`:
 
 ```bash
-sed -i 's|/sub/|/sub-secret-path/|g' /opt/3x-ui-setup/caddy/Caddyfile
+sed -i 's|/sub/|/super-secret-path/|g' /opt/3x-ui-setup/caddy/Caddyfile
 ```
 
 - Или можете заменить путь вручную, редактируя `Caddyfile` в редакторе
@@ -244,7 +244,7 @@ docker compose -f /opt/3x-ui-setup/docker-compose.yml down && docker compose -f 
 - Xver: 1
 - uTLS: chrome
 - Target: 127.0.0.1:4123
-- SNI: ваш.домен.com
+- SNI: my.domain.com
 - PrivateKey Public Key: сгенерировать нажав Get New Cert
 - ShortID: сгенерировать
 - Sniffing - enable: HTTP TLS QUIC FAKEDNS отмечены
