@@ -202,15 +202,15 @@ docker compose -f /opt/3x-ui-setup/docker-compose.yml up -d
 #### Настройка пути до подписки
 
 - Перейдите в `Panel Settings → Subscription -> URI Path (sub)`
-- Измените `/sub/` на что то свое, например: `/sub-secret-path/`
+- Измените `/sub/` на что то свое, например: `/super-secret-path/`
 - `Panel Settings → Subscription -> Reverse Proxy URI`
-- Измените Reverse Proxy URI на `https://ваш.домен.com:8443/sub-secret-path/`
+- Измените Reverse Proxy URI на `https://ваш.домен.com:8443/super-secret-path/`
 - Сохраните настройки и перезапустите панель.
 
 > [!CAUTION]
-> Без изменения `Caddyfile` подписки открываться не будут
+> Если URI Path начинается с sub, например /sub-secret-path/ то дополнительные изменения в `Caddyfile` не нужны, в любом другом случае необходимо изменеть `Caddyfile`, иначе подписки открываться не будут:
 
-- Измените путь `/sub/` на `/sub-secret-path/`  в `Caddyfile`:
+- Измените путь `/sub/` на `/super-secret-path/`  в `Caddyfile`:
 
 ```bash
 sed -i 's|/sub/|/sub-secret-path/|g' /opt/3x-ui-setup/caddy/Caddyfile
