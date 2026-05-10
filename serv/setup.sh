@@ -10,16 +10,22 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd -P)"
 SERVER_DIR="$SCRIPT_DIR"
 
 usage() {
-    echo "Usage: $0 <domain>"
+    echo "Usage: $0"
     echo ""
-    echo "Example: $0 mydomain.com"
+    echo "Domain will be prompted interactively."
+    echo ""
+    echo "Example:"
+    echo "  $0"
+    echo "  Domain: mydomain.com"
     exit 1
 }
 
-[ $# -lt 1 ] && usage
+[ $# -gt 0 ] && usage
 
-DOMAIN="$1"
+echo "=== steal-oneself Server Setup ==="
+echo ""
 
+read -p "Domain (e.g. mydomain.com): " DOMAIN
 if ! echo "$DOMAIN" | grep -qE '^[a-zA-Z0-9]([a-zA-Z0-9.-]*[a-zA-Z0-9])?\.[a-zA-Z]{2,}$'; then
     echo "Error: Invalid domain format"
     exit 1

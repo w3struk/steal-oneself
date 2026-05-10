@@ -82,8 +82,10 @@ docker run hello-world
 ```bash
 git clone https://github.com/w3struk/steal-oneself /opt
 cd /opt/serv
-./setup.sh mydomain.com
+./setup.sh
 ```
+
+Скрипт интерактивно запросит **домен**.
 
 Скрипт автоматически:
 - Генерирует пароль для Lampac
@@ -123,7 +125,6 @@ cd /opt/serv
 - **Dest/Domain/IP:** `mydomain.com`
 - **Port:** `443`
 - **Force TLS:** включить
-- **Remark:** `Через Caddy`
 
 ### Настройка подписки
 
