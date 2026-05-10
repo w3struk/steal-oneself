@@ -25,5 +25,21 @@
 - [CHIZI-0618](https://github.com/CHIZI-0618/) — AndroidTProxyShell
 
 ## полезное
+
+
+```bash
+docker ps #список контейнеров
+docker compose up -d    # start
+docker compose down     # stop
+docker compose logs -f  # logs
+docker system prune -a
+docker compose logs --tail 1000 lampac #Показать последние 1000 строк лога
+docker volume ls
+docker exec -it lampac bash
 docker compose down && docker compose up -d && docker compose logs -f
 docker system prune -a --volumes - Очистить все данные (контейнеры, образы, тома)
+```
+
+
+docker exec -it 3xui_app /app/x-ui setting -webBasePath /admin-izj0/
+docker restart 3xui_app
