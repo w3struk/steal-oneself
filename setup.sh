@@ -49,7 +49,10 @@ echo "Sub path:    /$SUB_PATH/"
 echo "Client UUID: $CLIENT_ID"
 echo ""
 
-echo "[1/8] Generating Lampac password..."
+echo "[1/8] Preparing directories and Lampac password..."
+mkdir -p "$SERVER_DIR/lampac"
+mkdir -p "$SERVER_DIR/3x-ui/db"
+mkdir -p "$SERVER_DIR/caddy/data"
 printf '%s' "$LAMJac_PASSWORD" > "$SERVER_DIR/lampac/passwd"
 echo "  Done"
 
@@ -95,8 +98,6 @@ iptables -P INPUT DROP
 echo "  Firewall configured (basic rules)"
 
 echo "[6/8] Starting services..."
-mkdir -p "$SERVER_DIR/3x-ui/db"
-mkdir -p "$SERVER_DIR/caddy/data"
 cd "$SERVER_DIR" && docker compose down && docker compose up -d
 echo "  Services started"
 

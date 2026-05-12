@@ -158,6 +158,5 @@ docker exec -it lampac bash
 docker compose down && docker compose up -d && docker compose logs -f
 docker system prune -a --volumes - Очистить все данные (контейнеры, образы, тома)
 
-docker exec -it 3xui_app /app/x-ui setting -webBasePath /admin-izj0/
-docker restart 3xui_app
+git pull origin main
 ```
