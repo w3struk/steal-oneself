@@ -16,8 +16,8 @@ services:
     ports:
       - "127.0.0.1:9118:9118"
     volumes:
-      - ./lampac/passwd:/lampac/passwd
-      - ./lampac/init.conf:/lampac/init.conf
+      - ./lampac/config/passwd:/lampac/passwd
+      - ./lampac/config/init.conf:/lampac/init.conf
 
   3xui:
     image: ghcr.io/mhsanaei/3x-ui:latest
