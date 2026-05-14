@@ -136,9 +136,9 @@ add_client() {
     echo -e "${G}Logged in${N}"
 
     echo ""
-    echo "Client Configuration:"
-    echo "  1) Single UUID for both inbounds"
-    echo "  2) Different UUIDs, separate subscriptions"
+    echo "Subscription Configuration:"
+    echo "  1) Different UUIDs, one subscription link (both configs under one link)"
+    echo "  2) Different UUIDs, separate subscription links (each its own link)"
     read -p "Choose (default: 1): " UUID_MODE
     UUID_MODE=${UUID_MODE:-1}
     echo ""
@@ -173,66 +173,50 @@ add_client() {
 
     get_inbound_ids
 
+    CID1=$(cat /proc/sys/kernel/random/uuid)
+    CID2=$(cat /proc/sys/kernel/random/uuid)
+
     if [ "$UUID_MODE" = "2" ]; then
-        CID1=$(cat /proc/sys/kernel/random/uuid)
-        CID2=$(cat /proc/sys/kernel/random/uuid)
         SID1=$(head -c 16 /dev/urandom | md5sum | head -c 16)
         SID2=$(head -c 16 /dev/urandom | md5sum | head -c 16)
         EMAIL1="${CLIENT_EMAIL:-$(gen_email)}"
         EMAIL2="${CLIENT_EMAIL:-$(gen_email)}"
+    else
+        SID1=$(head -c 16 /dev/urandom | md5sum | head -c 16)
+        SID2=$SID1
+        EMAIL1="${CLIENT_EMAIL:-$(gen_email)}"
+        EMAIL2=$EMAIL1
+    fi
 
-        if add_client_to_inbound "$ID_XHTTP" "$CID1" "$SID1" "$EMAIL1" ""; then
-            echo -e "  ${G}[OK]${N} XHTTP client added"
-        else
-            echo -e "  ${R}[ERROR]${N} Failed to add XHTTP client"
-        fi
-        if add_client_to_inbound "$ID_VISION" "$CID2" "$SID2" "$EMAIL2" "xtls-rprx-vision"; then
-            echo -e "  ${G}[OK]${N} Vision client added"
-        else
-            echo -e "  ${R}[ERROR]${N} Failed to add Vision client"
-        fi
+    if add_client_to_inbound "$ID_XHTTP" "$CID1" "$SID1" "$EMAIL1" ""; then
+        echo -e "  ${G}[OK]${N} XHTTP client added"
+    else
+        echo -e "  ${R}[ERROR]${N} Failed to add XHTTP client"
+    fi
+    if add_client_to_inbound "$ID_VISION" "$CID2" "$SID2" "$EMAIL2" "xtls-rprx-vision"; then
+        echo -e "  ${G}[OK]${N} Vision client added"
+    else
+        echo -e "  ${R}[ERROR]${N} Failed to add Vision client"
+    fi
 
-        echo ""
-        echo -e "${G}╔══════════════════════════════════════╗${N}"
-        echo -e "${G}║     ${B}Client Added${N}${G}                  ║${N}"
-        echo -e "${G}╚══════════════════════════════════════╝${N}"
-        echo ""
-        SUB_PATH=$(sqlite3 /opt/serv/3x-ui/db/x-ui.db "SELECT value FROM settings WHERE key='subPath' LIMIT 1;" 2>/dev/null || echo "/sub/")
+    echo ""
+    echo -e "${G}╔══════════════════════════════════════╗${N}"
+    echo -e "${G}║     ${B}Client Added${N}${G}                  ║${N}"
+    echo -e "${G}╚══════════════════════════════════════╝${N}"
+    echo ""
+    SUB_PATH=$(sqlite3 /opt/serv/3x-ui/db/x-ui.db "SELECT value FROM settings WHERE key='subPath' LIMIT 1;" 2>/dev/null || echo "/sub/")
+    if [ "$UUID_MODE" = "2" ]; then
         echo -e "${B}Subscription links:${N}"
         echo -e "  ${C}XHTTP:${N}  https://${C}${DOMAIN}${N}${SUB_PATH}${SID1}  (${EMAIL1})"
         echo -e "  ${C}Vision:${N} https://${C}${DOMAIN}${N}${SUB_PATH}${SID2}  (${EMAIL2})"
-        echo ""
-        echo -e "${B}UUIDs:${N}"
-        echo -e "  ${Y}XHTTP:${N}  ${C}$CID1${N}"
-        echo -e "  ${Y}Vision:${N} ${C}$CID2${N}"
-
     else
-        CID=$(cat /proc/sys/kernel/random/uuid)
-        SID=$(head -c 16 /dev/urandom | md5sum | head -c 16)
-        EMAIL="${CLIENT_EMAIL:-$(gen_email)}"
-
-        if add_client_to_inbound "$ID_XHTTP" "$CID" "$SID" "$EMAIL" ""; then
-            echo -e "  ${G}[OK]${N} Client added to XHTTP backend"
-        else
-            echo -e "  ${R}[ERROR]${N} Failed to add client to XHTTP backend"
-        fi
-        if add_client_to_inbound "$ID_VISION" "$CID" "$SID" "$EMAIL" "xtls-rprx-vision"; then
-            echo -e "  ${G}[OK]${N} Client added to Vision frontend"
-        else
-            echo -e "  ${R}[ERROR]${N} Failed to add client to Vision frontend"
-        fi
-
-        echo ""
-        echo -e "${G}╔══════════════════════════════════════╗${N}"
-        echo -e "${G}║     ${B}Client Added${N}${G}                  ║${N}"
-        echo -e "${G}╚══════════════════════════════════════╝${N}"
-        echo ""
-        SUB_PATH=$(sqlite3 /opt/serv/3x-ui/db/x-ui.db "SELECT value FROM settings WHERE key='subPath' LIMIT 1;" 2>/dev/null || echo "/sub/")
         echo -e "${B}Subscription link:${N}"
-        echo -e "  ${C}Single:${N} https://${C}${DOMAIN}${N}${SUB_PATH}${SID}  (${EMAIL})"
-        echo ""
-        echo -e "${B}UUID:${N} ${C}$CID${N}"
+        echo -e "  ${C}Single:${N} https://${C}${DOMAIN}${N}${SUB_PATH}${SID1}  (${EMAIL1})"
     fi
+    echo ""
+    echo -e "${B}UUIDs:${N}"
+    echo -e "  ${Y}XHTTP:${N}  ${C}$CID1${N}"
+    echo -e "  ${Y}Vision:${N} ${C}$CID2${N}"
 
     rm "$COOKIE_FILE"
 }
@@ -387,12 +371,10 @@ echo -e "${Y}-------------------------------${N}"
 echo ""
 
 echo -e "${Y}--- Client Configuration ---${N}"
-echo "How to handle client IDs for the two inbounds (XHTTP backend + Vision frontend):"
+echo "How to handle subscription for the two inbounds (XHTTP backend + Vision frontend):"
 echo ""
-echo "  1) Single ID (UUID) for both inbounds"
-echo "     One subscription returns both configs. Simpler setup."
-echo "  2) Different UUIDs, separate subscriptions"
-echo "     Each inbound has its own UUID and subscription link."
+echo "  1) Different UUIDs, one subscription link (both configs under one link)"
+echo "  2) Different UUIDs, separate subscription links (each its own link)"
 echo ""
 read -p "Choose (default: 1): " UUID_MODE
 UUID_MODE=${UUID_MODE:-1}
@@ -403,13 +385,12 @@ SUB_PATH="sub-$(head -c 8 /dev/urandom | base64 | tr -dc 'a-z0-9' | head -c 8)"
 XHTTP_PATH="api/v$(shuf -i 1-999 -n 1)"
 LAMJac_PASSWORD="$(head -c 16 /dev/urandom | base64 | tr -dc 'a-zA-Z0-9' | head -c 16)"
 
+CLIENT_ID=$(cat /proc/sys/kernel/random/uuid)
+CLIENT_ID_VISION=$(cat /proc/sys/kernel/random/uuid)
 if [ "$UUID_MODE" = "2" ]; then
-    CLIENT_ID=$(cat /proc/sys/kernel/random/uuid)
-    CLIENT_ID_VISION=$(cat /proc/sys/kernel/random/uuid)
     SUB_ID=$(head -c 16 /dev/urandom | md5sum | head -c 16)
     SUB_ID_VISION=$(head -c 16 /dev/urandom | md5sum | head -c 16)
 else
-    CLIENT_ID=$(cat /proc/sys/kernel/random/uuid)
     SUB_ID=$(head -c 16 /dev/urandom | md5sum | head -c 16)
 fi
 
@@ -418,11 +399,8 @@ echo -e "${Y}Domain:${N}      ${C}$DOMAIN${N}"
 echo -e "${Y}Admin path:${N}  /$ADMIN_PATH/"
 echo -e "${Y}Sub path:${N}    /$SUB_PATH/"
 echo -e "${Y}XHTTP path:${N}  /$XHTTP_PATH/"
-if [ "$UUID_MODE" = "2" ]; then
-    echo -e "${Y}XHTTP UUID:${N}  ${C}$CLIENT_ID${N}"
-    echo -e "${Y}Vision UUID:${N} ${C}$CLIENT_ID_VISION${N}"
-fi
-echo -e "${Y}Client UUID:${N} ${C}$CLIENT_ID${N}"
+echo -e "${Y}XHTTP UUID:${N}  ${C}$CLIENT_ID${N}"
+echo -e "${Y}Vision UUID:${N} ${C}$CLIENT_ID_VISION${N}"
 echo ""
 
 echo -e "${G}[1/8]${N} Preparing directories and Lampac password..."
@@ -533,7 +511,7 @@ FRONTEND_RESP=$(xui_json "http://127.0.0.1:2053/panel/api/inbounds/add" '{
   "up": 0, "down": 0, "total": 0,
   "remark": "VLESS-TCP-Vision-Frontend", "enable": true, "expiryTime": 0,
   "listen": "", "port": 443, "protocol": "vless",
-  "settings": "{\"clients\":[{\"id\":\"'"${CLIENT_ID_VISION:-$CLIENT_ID}"'\",\"flow\":\"xtls-rprx-vision\",\"subId\":\"'"${SUB_ID_VISION:-$SUB_ID}"'\"}],\"decryption\":\"none\",\"fallbacks\":[{\"dest\":\"8080\",\"xver\":2}]}",
+  "settings": "{\"clients\":[{\"id\":\"'"$CLIENT_ID_VISION"'\",\"flow\":\"xtls-rprx-vision\",\"subId\":\"'"${SUB_ID_VISION:-$SUB_ID}"'\"}],\"decryption\":\"none\",\"fallbacks\":[{\"dest\":\"8080\",\"xver\":2}]}",
   "streamSettings": "{\"network\":\"tcp\",\"security\":\"tls\",\"tlsSettings\":{\"serverName\":\"'"$DOMAIN"'\",\"minVersion\":\"1.3\",\"maxVersion\":\"1.3\",\"cipherSuites\":\"\",\"certificates\":[{\"certificateFile\":\"'"$CERT_DIR/$DOMAIN"'.crt\",\"keyFile\":\"'"$CERT_DIR/$DOMAIN"'.key\"}],\"alpn\":[\"h2\",\"http/1.1\"]}}",
   "sniffing": "{\"enabled\":true,\"destOverride\":[\"http\",\"tls\"],\"routeOnly\":true}",
   "allocate": "{\"strategy\":\"always\",\"refresh\":5,\"concurrency\":3}"
